@@ -26,29 +26,25 @@ Container<TypeT> consumeStream(std::basic_istream<char> &stream)
 
 
 
-bool safe_pair( int64_t fst, int64_t snd, int64_t sign )
+std::size_t find_xmas(const std::vector<std::vector<char>> &instance, std::size_t N, std::size_t y, std::size_t x, int dy, int dx, std::size_t progress)
 {
-    int64_t diff = snd - fst;
-    if ( diff == 0 ) return false;
+    static constexpr std::string_view fullstring = "XMAS";
+    char to_find = fullstring[progress];
 
-    int64_t new_sign = diff / std::abs(diff);
-    return new_sign == sign && std::abs(diff) <= 3;
-}
+    if ( y < 0 || y >= N ) return 0;
+    if ( x < 0 || x >= N ) return 0;
 
-bool is_safe(std::vector<int64_t> &report)
-{
-    bool inc = false;
-    bool dec = false;
 
-    for ( auto [fst, snd] : report | std::views::adjacent<2> )
-    {
-        inc |= snd > fst;
-        dec |= snd < fst;
+    if ( instance[y][x] == to_find ) {
+        if ( progress == fullstring.size() - 1 ) {
+            return 1;
+        }
 
-        if ( std::abs(snd - fst) > 3 || snd == fst ) return false;
+        return find_xmas(instance, N, y + static_cast<std::size_t>(dy), x + static_cast<std::size_t>(dx), dy, dx, progress + 1);
+
+    } else {
+        return 0;
     }
-
-    return inc != dec;
 }
 
 std::size_t task1(std::filesystem::path path)
@@ -61,37 +57,39 @@ std::size_t task1(std::filesystem::path path)
     }
 
     std::string current_line;
-    std::size_t safe_reports = 0;
+
+    std::vector<std::vector<char>> problem{};
+
 
     while ( std::getline(fh, current_line) ) {
         std::istringstream ss{current_line};
-        std::vector<int64_t> report = consumeStream<int64_t>(ss);
-        safe_reports += is_safe(report); // == true ? 1 : 0;
+        problem.emplace_back(consumeStream<char>(ss));
     }
 
-    return safe_reports;
-}
+    std::size_t all = 0;
+    std::size_t N = problem[0].size();
 
-
-
-bool dampened_safe_report(std::vector<int64_t> &report)
-{
-    if ( is_safe(report) ) return true;
-
-    for ( int i = 0; i < report.size(); i++ ) {
-        std::vector<int64_t> copies{report};
-        auto pos_iter = std::begin(copies);
-        std::advance(pos_iter, i);
-        copies.erase(pos_iter);
-
-        if ( is_safe(copies) ) return true;
+    for ( std::size_t y = 0; y < problem.size(); y++ ) {
+        for ( std::size_t x = 0; x < problem[0].size(); x++ ) {
+            all += find_xmas(problem, N, y, x, -1, -1, 0);
+            all += find_xmas(problem, N, y, x, -1, 0, 0);
+            all += find_xmas(problem, N, y, x, -1, 1, 0);
+            all += find_xmas(problem, N, y, x, 0, 1, 0);
+            all += find_xmas(problem, N, y, x, 1, 1, 0);
+            all += find_xmas(problem, N, y, x, 1, 0, 0);
+            all += find_xmas(problem, N, y, x, 1, -1, 0);
+            all += find_xmas(problem, N, y, x, 0, -1, 0);
+        }
     }
 
-    return false;
+    std::cout << all << "\n";
+
+    return 0;
 }
 
 std::size_t task2(std::filesystem::path path)
 {
+
     std::fstream fh{path};
 
     if ( ! fh.is_open() ) {
@@ -99,16 +97,40 @@ std::size_t task2(std::filesystem::path path)
     }
 
     std::string current_line;
-    std::size_t safe_reports = 0;
+
+    std::vector<std::vector<char>> problem{};
+
 
     while ( std::getline(fh, current_line) ) {
         std::istringstream ss{current_line};
-        std::vector<int64_t> report = consumeStream<int64_t>(ss);
-        safe_reports += dampened_safe_report(report);
+        problem.emplace_back(consumeStream<char>(ss));
     }
 
-    return safe_reports;
+    std::size_t all = 0;
+
+    for ( std::size_t y = 1; y < problem.size()-1; y++ ) {
+        for ( std::size_t x = 1; x < problem[0].size()-1; x++ ) {
+            if ( problem[y][x] == 'A' ) {
+                // Check above and below
+                const bool verticalForwardMAS = problem[y-1][x-1] == 'M' && problem[y+1][x+1] == 'S';
+                const bool verticalBackwardMAS = problem[y-1][x-1] == 'S' && problem[y+1][x+1] == 'M';
+                const bool horizontalForwardMAS = problem[y-1][x+1] == 'M' && problem[y+1][x-1] == 'S';
+                const bool horizontalBackwardMAS = problem[y-1][x+1] == 'S' && problem[y+1][x-1] == 'M';
+
+                const bool verticalMAS = verticalForwardMAS || verticalBackwardMAS;
+                const bool horizontalMAS = horizontalForwardMAS || horizontalBackwardMAS;
+
+                if ( verticalMAS && horizontalMAS ) all++;
+            }
+        }
+    }
+
+    std::cout << all << "\n";
+
+    return 0;
 }
+
+
 
 int main(int argc, char *argv[])
 {
