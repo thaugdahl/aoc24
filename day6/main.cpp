@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <execution>
 #include <string>
 #include <filesystem>
 #include <format>
@@ -189,7 +190,7 @@ std::pair<GuardMap, bool> guard_walk(GuardMap &&map) {
         if ( ! map.is_inside(next.x, next.y) ) break;
 
         int64_t serialized = pos.x + pos.y * map.nx;
-        if ( ++encounteredTimes[serialized] > 5 ) {
+        if ( ++encounteredTimes[serialized] > 2 ) {
             looped = true;
             break;
         }
@@ -240,17 +241,16 @@ int64_t task2(std::filesystem::path path)
     // Keep track of how many places an obstacles would cause a loop
     int64_t loopWays = 0;
 
-    // Try placing an obstacle in a walked position and let the guard walk
-    for ( auto [px, py] : walkedPositions ) {
+    loopWays = std::transform_reduce(std::execution::par, std::begin(walkedPositions), std::end(walkedPositions), 0, std::plus<>{}, [&map] (auto position) {
         auto currentMapInstance = map;
+
+        auto [px, py] = position;
+
         currentMapInstance.content_at(px, py) = '#';
         auto [walk, looped] = guard_walk(std::move(currentMapInstance));
 
-        if ( looped ) {
-            loopWays++;
-        }
-    }
-
+        return looped ? 1 : 0;
+    });
 
     return loopWays;
 }
@@ -270,7 +270,16 @@ int main(int argc, char *argv[])
     }
 
     auto t1 = task1(file_to_read);
+
+
+    auto hires = std::chrono::high_resolution_clock{};
+    auto start = hires.now();
+
     auto t2 = task2(file_to_read);
+
+    auto end = hires.now();
+
+    std::cout << std::format("Task 2 took {} ns\n", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 
     std::cout << std::format("Task 1: {}\n", t1);
     std::cout << std::format("Task 2: {}\n", t2);
