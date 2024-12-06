@@ -4,13 +4,11 @@
 #include <fstream>
 #include <iostream>
 #include <list>
-#include <numeric>
 #include <string>
 #include <filesystem>
 #include <format>
 #include <unordered_map>
 #include <vector>
-#include <ranges>
 
 
 template <class TypeT,
