@@ -1,0 +1,12 @@
+-std=c++23
+-stdlib=libc++
+-I/home/tor/Downloads/LLVM-19.1.0-Linux-X64/include/c++/v1/
+-I/home/tor/Downloads/LLVM-19.1.0-Linux-X64/include/c++/v1/
+-I/home/tor/Downloads/LLVM-19.1.0-Linux-X64/include/x86_64-unknown-linux-gnu/c++/v1/
+-I/home/tor/Downloads/LLVM-19.1.0-Linux-X64/include/c++/v1/
+-I/home/tor/Downloads/LLVM-19.1.0-Linux-X64/include/x86_64-unknown-linux-gnu/c++/v1/
+-Werror
+-Wall
+-Wpedantic
+-Wunused
+-Wconversion
